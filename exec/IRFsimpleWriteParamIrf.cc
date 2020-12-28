@@ -57,7 +57,7 @@ int main()
 //  Build GIRF object, introduce the generated GIRFPdf object and write it into a fits file.
 	flexIRF::GIRF irf;
 	irf.AddPdf(myIrfToStore);
-	irf.Write("!examples/testParamEffArea.fits");
+	irf.Write("testParamEffArea.fits");
 
 	return 0;
 }//Ends main

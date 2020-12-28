@@ -62,10 +62,8 @@ int main()
 //  Build GIRF object, introduce the generated GIRFPdf object and write it into a fits file.
 	flexIRF::GIRF irf;
 	irf.AddPdf(myIrfToStore);
-	cout << "Writing IRF element using IMAGE serialization into examples/testEffAreaIMAGE.fits" << endl;
-	irf.Write("!examples/testEffAreaIMAGE.fits", "IMAGE");
-	cout << "Writing IRF element using BINTABLE serialization into examples/testEffAreaBINTABLE.fits" << endl;
-	irf.Write("!examples/testEffAreaBINTABLE.fits", "BINTABLE");
+	cout << "Writing IRF element example into examples/testEffArea.fits" << endl;
+	irf.Write("testEffArea.fits");
 
 	return 0;
 }//Ends main

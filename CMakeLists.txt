@@ -1,65 +1,40 @@
-cmake_minimum_required(VERSION 2.8)
-project(IRM)
+cmake_minimum_required(VERSION 3.0)
+project(FLEXIRF VERSION 0.0.1)
 
-## Setup CMake modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/")
+# where to save the .so (.dylib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_INSTALL_LIBDIR ${CMAKE_BINARY_DIR}/lib) 
+# where to save the executables
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# where to find the FindPACKAGE.cmake modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/CMakeModules/)
 
-## Include FITS libraries                                                                                                                                                        
-find_package(CFITSIO REQUIRED)
-include_directories(${CFITSIO_INCLUDE_DIRS})
-set( EXTRA_LIBS ${EXTRA_LIBS} ${CFITSIO_LIBRARIES} )
+find_library(CFITSIO_LIBRARY cfitsio REQUIRED)
+message("-- found CFITSIO_LIBRARY at ${CFITSIO_LIBRARY}")
 
-## ROOT 
+add_library(
+	flexIRF SHARED
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRF.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFAxis.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFAxisBins.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFAxisParam.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFConfig.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFPdf.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFRange.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GIRFUtils.cc
+	${PROJECT_SOURCE_DIR}/flexirf/src/GMetaData.cc
+)
+target_link_libraries(flexIRF ${CFITSIO_LIBRARY})
+target_include_directories(flexIRF PUBLIC ${PROJECT_SOURCE_DIR}/flexirf/include)
+# install the flexIRF libraries in /usr/local/lib
+install(TARGETS flexIRF DESTINATION lib)
 
-## Include ROOT libraries   
-find_package(ROOT)
-IF(ROOT_FOUND)
-    add_definitions(-DWITH_ROOT)
-	include_directories(${ROOT_INCLUDE_DIR})
-	set( ROOT_LIBS ${ROOT_LIBS} ${ROOT_LIBRARIES} )
-	set( rootinc ${PROJECT_SOURCE_DIR}/include )
-	include_directories(${rootinc})
-ENDIF()                                                                                                                                          
+# add the executables
+add_executable(simpleWriteIrf ${PROJECT_SOURCE_DIR}/exec/IRFsimpleWriteIrf.cc)
+target_link_libraries(simpleWriteIrf flexIRF)
+install(TARGETS simpleWriteIrf DESTINATION bin)
 
+add_executable(simpleWriteParamIrf ${PROJECT_SOURCE_DIR}/exec/IRFsimpleWriteParamIrf.cc)
+target_link_libraries(simpleWriteParamIrf flexIRF)
+install(TARGETS simpleWriteParamIrf DESTINATION bin)
 
-## Add flexIRF code
-set( srcForfIRF ${PROJECT_SOURCE_DIR}/flexirf/src )
-include_directories(${srcForfIRF})
-
-set( incForfIRF ${PROJECT_SOURCE_DIR}/flexirf/include )
-include_directories(${incForfIRF})
-
-## Specify source code
-set( srcsIRFconv ${PROJECT_SOURCE_DIR}/src/IRFconverter_root2FITS.cc )
-
-## Building library                                                                                                                  
-add_subdirectory (flexirf) 
-add_executable( IRFconverter_root2FITS ${srcsIRFconv} )
-
-## Link everything
-target_link_libraries( IRFconverter_root2FITS flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-##All other tools
-set( srcsIRFg ${PROJECT_SOURCE_DIR}/src/IRFgenerator_rootio.cc )
-add_executable( IRFgenerator_rootio ${srcsIRFg} )
-target_link_libraries( IRFgenerator_rootio flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-set( srcsIRFsimpleWriteIrf ${PROJECT_SOURCE_DIR}/src/IRFsimpleWriteIrf.cc )
-add_executable( IRFsimpleWriteIrf ${srcsIRFsimpleWriteIrf} )
-target_link_libraries( IRFsimpleWriteIrf flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-set( srcsIRFsimpleWriteIrfSerialization ${PROJECT_SOURCE_DIR}/src/IRFsimpleWriteIrfSerialization.cc )
-add_executable( IRFsimpleWriteIrfSerialization ${srcsIRFsimpleWriteIrfSerialization} )
-target_link_libraries( IRFsimpleWriteIrfSerialization flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-
-set( srcsIRFsimpleWriteParamIrf ${PROJECT_SOURCE_DIR}/src/IRFsimpleWriteParamIrf.cc )
-add_executable( IRFsimpleWriteParamIrf ${srcsIRFsimpleWriteParamIrf} )
-target_link_libraries( IRFsimpleWriteParamIrf flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-set( srcsIRFsimpleReadIrf ${PROJECT_SOURCE_DIR}/src/IRFsimpleReadIrf.cc )
-add_executable( IRFsimpleReadIrf ${srcsIRFsimpleReadIrf} )
-target_link_libraries( IRFsimpleReadIrf flexirf ${EXTRA_LIBS} ${ROOT_LIBS} )
-
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-install(TARGETS IRFconverter_root2FITS IRFgenerator_rootio IRFsimpleWriteIrf IRFsimpleWriteParamIrf IRFsimpleReadIrf DESTINATION bin)
